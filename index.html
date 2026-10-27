@@ -162,7 +162,7 @@ const LS = {
 };
 
 const DEFAULT_STYLE = "1980s hand-painted Japanese anime feature-film style, soft watercolor-like painted backgrounds, gentle pastel and earthy colour palette, warm film grain, cel-shaded characters with soft thin outlines, nostalgic whimsical atmosphere, natural soft lighting";
-const TEXT_MODELS = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash"];
+const TEXT_MODELS = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-flash-lite", "gemini-2.0-flash"];
 const TTS_MODELS = ["gemini-3.1-flash-tts-preview", "gemini-2.5-flash-preview-tts"];
 
 /* ---------- ভয়েস লাইব্রেরি ---------- */
@@ -236,6 +236,7 @@ function friendlyError(e) {
   if (!e) return "অজানা সমস্যা";
   if (e.code === "NOKEY") return e.message;
   if (e.status === 400 && /API key/i.test(e.message)) return "API Key ভুল বা অচল। সেটিংসে আবার দিন।";
+  if (e.status === 503 || e.status === 500 || /high demand|overloaded|UNAVAILABLE/i.test(e.message || "")) return "Google-এর সব মডেলেই এখন অনেক চাপ (" + (e.status || 503) + ")। এটা আপনার ভুল নয়। ২-৫ মিনিট পর আবার \"সব তৈরি করুন\" চাপুন। রাতের বেলা বা ব্যস্ত সময়ে এমন হয়।";
   if (e.status === 403) return "অনুমতি নেই (403)। Key ঠিক আছে কিনা এবং আপনার দেশে সেবা চালু আছে কিনা দেখুন।\n" + e.message;
   if (e.status === 429) {
     const raw = String(e.message || "").slice(0, 220);
@@ -353,9 +354,11 @@ async function analyzeStory(story, setStatus) {
       } catch (e) {
         lastErr = e;
         if (isModelProblem(e)) break;
-        if ((e.status === 429 || e.status >= 500 || e.code === "EMPTY") && attempt < 2) {
-          const w = Math.min(e.retry || 15, 60);
-          setStatus("অপেক্ষা করছি " + Math.ceil(w) + " সেকেন্ড, তারপর আবার চেষ্টা...");
+        if (e.status === 429 && (e.daily || e.zero)) break; // দৈনিক কোটা শেষ: পরের মডেলে যাও
+        if (e.status === 429 || e.status >= 500 || e.code === "EMPTY") {
+          if (attempt >= 2) break; // এই মডেল ব্যর্থ: পরের বিকল্প মডেলে যাও
+          const w = e.status >= 500 ? 8 * (attempt + 1) : Math.min(e.retry || 15, 60);
+          setStatus("মডেল " + m + " এখন ব্যস্ত। " + Math.ceil(w) + " সেকেন্ড পর আবার চেষ্টা (" + (attempt + 2) + "/3)...");
           await sleep(w * 1000);
           continue;
         }
