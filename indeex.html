@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>গল্প থেকে ভিডিও স্টুডিও</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14110f; --card:#1e1a17; --card2:#27221e; --line:#3a332d;
+  --text:#f3ece4; --muted:#a79d92; --accent:#f0a64a; --accent2:#e07a5f;
+  --ok:#7bc27b; --err:#ef6b6b; --radius:14px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Hind Siliguri',system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;font-size:16px}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
+header{padding:22px 0 8px}
+header h1{margin:0;font-size:1.6rem;font-weight:700}
+header h1 span{color:var(--accent)}
+header p{margin:4px 0 0;color:var(--muted);font-size:.95rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin:14px 0}
+.card h2{margin:0 0 10px;font-size:1.15rem}
+label{display:block;font-size:.85rem;color:var(--muted);margin:10px 0 4px}
+input,textarea,select{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:.95rem}
+textarea{resize:vertical;min-height:90px}
+textarea.mono{font-size:.88rem;line-height:1.5}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:0}
+.row{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:700px){.row.two{grid-template-columns:1fr 1fr}.row.three{grid-template-columns:1fr 1fr 1fr}}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 16px;font-weight:600;transition:.15s}
+button.primary{background:var(--accent);color:#1b1208}
+button.primary:hover{filter:brightness(1.08)}
+button.ghost{background:var(--card2);color:var(--text);border:1px solid var(--line)}
+button.ghost:hover{border-color:var(--accent)}
+button.small{padding:5px 11px;font-size:.82rem;border-radius:8px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.msg{margin-top:10px;font-size:.92rem;white-space:pre-wrap}
+.msg.ok{color:var(--ok)} .msg.err{color:var(--err)} .msg.info{color:var(--muted)}
+details.card summary{cursor:pointer;font-weight:600;font-size:1.05rem}
+nav.tabs{position:sticky;top:0;z-index:5;background:rgba(20,17,15,.92);backdrop-filter:blur(6px);padding:8px 0;display:flex;gap:6px;overflow-x:auto;border-bottom:1px solid var(--line)}
+nav.tabs a{color:var(--text);text-decoration:none;white-space:nowrap;padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-size:.88rem;background:var(--card)}
+nav.tabs a:hover{border-color:var(--accent);color:var(--accent)}
+.box{margin-top:10px}
+.boxhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+.boxhead b{font-size:.9rem;color:var(--accent)}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:760px){.grid.cols2{grid-template-columns:1fr 1fr}}
+.char{background:var(--card2);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.char h3{margin:0 0 4px;font-size:1.05rem}
+.tag{display:inline-block;background:#3a2c1c;color:var(--accent);border-radius:999px;padding:2px 10px;font-size:.78rem;margin:2px 4px 2px 0}
+.muted{color:var(--muted);font-size:.88rem}
+.scene-head{display:flex;align-items:center;gap:10px}
+.num{background:var(--accent2);color:#fff;border-radius:50%;width:32px;height:32px;display:grid;place-items:center;font-weight:700;flex:none}
+audio{width:100%;margin-top:8px}
+.loader{display:inline-block;width:16px;height:16px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:-3px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.hidden{display:none}
+footer{color:var(--muted);font-size:.8rem;text-align:center;padding:24px 0 40px}
+.chk{display:flex;gap:8px;align-items:center;margin-top:10px;color:var(--muted);font-size:.9rem}
+.chk input{width:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>🎬 গল্প থেকে <span>ভিডিও স্টুডিও</span></h1>
+  <p>গল্প দিন → ক্যারেক্টার, ছবির প্রম্পট, দৃশ্য, ডায়ালগ ও ভয়েসওভার — সব একসাথে।</p>
+</header>
+
+<!-- সেটিংস -->
+<details class="card" id="settingsBox">
+  <summary>⚙️ সেটিংস (API Key)</summary>
+  <label for="apiKey">Google AI Studio API Key</label>
+  <input id="apiKey" type="password" placeholder="AIza..." autocomplete="off">
+  <div class="chk"><input type="checkbox" id="showKey"><label for="showKey" style="margin:0">Key দেখান</label></div>
+  <div class="row two">
+    <div>
+      <label for="textModel">টেক্সট মডেল (খালি রাখলেও চলবে)</label>
+      <input id="textModel" value="gemini-2.5-flash">
+    </div>
+    <div>
+      <label for="ttsModel">ভয়েস (TTS) মডেল</label>
+      <input id="ttsModel" value="gemini-3.1-flash-tts-preview">
+    </div>
+  </div>
+  <p class="muted">Key শুধু আপনার ব্রাউজারেই সেভ থাকে (localStorage)। এটা GitHub-এ বা কোডে কখনো বসাবেন না। Key পাবেন: aistudio.google.com → Get API key।</p>
+  <div class="actions">
+    <button class="primary" id="saveSettings">সেভ করুন</button>
+    <button class="ghost" id="testKey">Key পরীক্ষা করুন</button>
+  </div>
+  <div class="msg info" id="settingsMsg"></div>
+</details>
+
+<!-- গল্প -->
+<section class="card" id="inputCard">
+  <h2>📖 আপনার গল্প</h2>
+  <label for="story">গল্পটি এখানে পেস্ট করুন (বাংলায়)</label>
+  <textarea id="story" rows="10" placeholder="এক গ্রামে রহিম নামে এক বৃদ্ধ কাঠুরিয়া থাকত..."></textarea>
+  <div class="row two">
+    <div>
+      <label for="ratio">ভিডিওর অনুপাত</label>
+      <select id="ratio">
+        <option value="16:9">16:9 (ইউটিউব / ল্যান্ডস্কেপ)</option>
+        <option value="9:16">9:16 (রিলস / শর্টস)</option>
+      </select>
+    </div>
+    <div>
+      <label for="style">আর্ট স্টাইল (এডিট করতে পারেন)</label>
+      <textarea id="style" rows="3"></textarea>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="primary" id="goBtn">✨ সব তৈরি করুন</button>
+    <button class="ghost" id="clearBtn">সব মুছুন</button>
+  </div>
+  <div class="msg info" id="goMsg"></div>
+</section>
+
+<div id="results" class="hidden">
+  <nav class="tabs">
+    <a href="#sec-names">নাম</a>
+    <a href="#sec-chars">ক্যারেক্টার ছবি</a>
+    <a href="#sec-voice">ডায়ালগ ও ভয়েস</a>
+    <a href="#sec-scenes">দৃশ্য</a>
+    <a href="#sec-export">ডাউনলোড</a>
+  </nav>
+  <div id="resBody"></div>
+</div>
+
+<footer>Google AI Studio (Gemini) · Flow · সম্পূর্ণ ফ্রী টিয়ারে চলার মতো করে বানানো</footer>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- ছোট সহায়ক ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const uniq = a => [...new Set(a)];
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+
+const DEFAULT_STYLE = "1980s hand-painted Japanese anime feature-film style, soft watercolor-like painted backgrounds, gentle pastel and earthy colour palette, warm film grain, cel-shaded characters with soft thin outlines, nostalgic whimsical atmosphere, natural soft lighting";
+const TEXT_MODELS = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash"];
+const TTS_MODELS = ["gemini-3.1-flash-tts-preview", "gemini-2.5-flash-preview-tts"];
+
+/* ---------- ভয়েস লাইব্রেরি ---------- */
+const VOICE_INFO = {
+  Zephyr: ["f", "উজ্জ্বল"], Kore: ["f", "দৃঢ়"], Leda: ["f", "তরুণ"], Aoede: ["f", "হালকা-প্রাণবন্ত"],
+  Callirrhoe: ["f", "সহজ-স্বচ্ছন্দ"], Autonoe: ["f", "উজ্জ্বল"], Despina: ["f", "মসৃণ"], Erinome: ["f", "পরিষ্কার"],
+  Laomedeia: ["f", "উচ্ছল"], Achernar: ["f", "নরম"], Gacrux: ["f", "পরিণত"], Pulcherrima: ["f", "জোরালো"],
+  Vindemiatrix: ["f", "কোমল"], Sulafat: ["f", "উষ্ণ"],
+  Puck: ["m", "প্রাণবন্ত"], Charon: ["m", "তথ্যবহুল/গম্ভীর"], Fenrir: ["m", "উত্তেজিত"], Orus: ["m", "দৃঢ়"],
+  Enceladus: ["m", "শ্বাসমিশ্রিত"], Iapetus: ["m", "পরিষ্কার"], Umbriel: ["m", "সহজ-স্বচ্ছন্দ"], Algieba: ["m", "মসৃণ"],
+  Algenib: ["m", "ভারী/খসখসে"], Rasalgethi: ["m", "তথ্যবহুল"], Alnilam: ["m", "দৃঢ়"], Schedar: ["m", "সমতল/শান্ত"],
+  Achird: ["m", "বন্ধুসুলভ"], Zubenelgenubi: ["m", "ক্যাজুয়াল"], Sadachbia: ["m", "চঞ্চল"], Sadaltager: ["m", "জ্ঞানী"]
+};
+const VOICE_PICK = {
+  female: {
+    child: ["Leda", "Laomedeia"], teen: ["Leda", "Laomedeia", "Aoede"],
+    young: ["Aoede", "Zephyr", "Autonoe", "Callirrhoe"], adult: ["Kore", "Despina", "Erinome", "Sulafat"],
+    elder: ["Gacrux", "Vindemiatrix", "Achernar"]
+  },
+  male: {
+    child: ["Puck", "Sadachbia"], teen: ["Puck", "Sadachbia", "Fenrir"],
+    young: ["Fenrir", "Achird", "Zubenelgenubi", "Umbriel"], adult: ["Charon", "Orus", "Alnilam", "Iapetus", "Schedar"],
+    elder: ["Algenib", "Rasalgethi", "Enceladus"]
+  }
+};
+
+/* ---------- স্টেট ---------- */
+const state = { data: null, voices: {}, audioUrls: {}, busy: false };
+
+/* ---------- Gemini API ---------- */
+class GErr extends Error {
+  constructor(m, status, code, retry) { super(m); this.status = status || 0; this.code = code || ""; this.retry = retry || null; }
+}
+function getKey() { return $("#apiKey").value.trim(); }
+
+async function gemini(model, body) {
+  const key = getKey();
+  if (!key) throw new GErr("আগে সেটিংসে API Key দিন।", 0, "NOKEY");
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent";
+  let res;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify(body)
+    });
+  } catch (e) {
+    throw new GErr("নেটওয়ার্ক সমস্যা: ইন্টারনেট চেক করুন। (" + e.message + ")", 0, "NET");
+  }
+  let j = null;
+  try { j = await res.json(); } catch (e) {}
+  if (!res.ok) {
+    const msg = (j && j.error && j.error.message) || ("HTTP " + res.status);
+    let retry = null;
+    const m = /retry in ([\d.]+)s/i.exec(msg);
+    if (m) retry = parseFloat(m[1]);
+    const det = (j && j.error && j.error.details) || [];
+    for (const d of det) { if (d && d.retryDelay) retry = parseFloat(d.retryDelay) || retry; }
+    throw new GErr(msg, res.status, (j && j.error && j.error.status) || "", retry);
+  }
+  return j;
+}
+function isModelProblem(e) {
+  return e.status === 404 || /not found|not supported|is not available|unsupported/i.test(e.message || "");
+}
+function friendlyError(e) {
+  if (!e) return "অজানা সমস্যা";
+  if (e.code === "NOKEY") return e.message;
+  if (e.status === 400 && /API key/i.test(e.message)) return "API Key ভুল বা অচল। সেটিংসে আবার দিন।";
+  if (e.status === 403) return "অনুমতি নেই (403)। Key ঠিক আছে কিনা এবং আপনার দেশে সেবা চালু আছে কিনা দেখুন।\n" + e.message;
+  if (e.status === 429) return "ফ্রী লিমিট শেষ বা খুব দ্রুত রিকোয়েস্ট হয়েছে (429)। এক-দুই মিনিট অপেক্ষা করে আবার চেষ্টা করুন।";
+  return e.message || String(e);
+}
+
+/* ---------- JSON পার্স (কাটা JSON-ও মেরামত করে) ---------- */
+function closersFor(str) {
+  const st = []; let inS = false, esc2 = false;
+  for (const ch of str) {
+    if (inS) { if (esc2) esc2 = false; else if (ch === "\\") esc2 = true; else if (ch === '"') inS = false; }
+    else {
+      if (ch === '"') inS = true;
+      else if (ch === "{") st.push("}");
+      else if (ch === "[") st.push("]");
+      else if (ch === "}" || ch === "]") st.pop();
+    }
+  }
+  return st.reverse().join("");
+}
+function parseLooseJSON(txt) {
+  txt = String(txt || "").trim().replace(/^```(?:json)?/i, "").replace(/```\s*$/, "").trim();
+  try { return JSON.parse(txt); } catch (e) {}
+  const start = txt.indexOf("{");
+  if (start < 0) throw new Error("মডেলের উত্তরে JSON পাওয়া যায়নি।");
+  const s = txt.slice(start);
+  try { return JSON.parse(s); } catch (e) {}
+  let last = s.length;
+  for (let t = 0; t < 400; t++) {
+    const p = Math.max(s.lastIndexOf("}", last - 1), s.lastIndexOf("]", last - 1));
+    if (p < 0) break;
+    const head = s.slice(0, p + 1);
+    try { return JSON.parse(head + closersFor(head)); } catch (e) {}
+    last = p;
+  }
+  throw new Error("উত্তর পার্স করা যায়নি। গল্পটা ছোট করে আবার চেষ্টা করুন।");
+}
+
+/* ---------- মাস্টার প্রম্পট ---------- */
+const SYSTEM_PROMPT = [
+"You are a professional story-to-animation pre-production assistant. You receive a Bengali story and must return ONE valid JSON object and nothing else (no markdown fences, no commentary).",
+"",
+"JSON shape:",
+"{",
+'  "title": "গল্পের নাম (বাংলা)",',
+'  "synopsis": "২-৩ বাক্যে সারাংশ (বাংলা)",',
+'  "characters": [',
+'    {',
+'      "id": "c1",',
+'      "name": "বাংলা নাম",',
+'      "name_en": "English transliteration used in prompts",',
+'      "gender": "male" or "female",',
+'      "age": integer,',
+'      "age_group": "child" | "teen" | "young" | "adult" | "elder",',
+'      "role": "ভূমিকা (বাংলা, ১ লাইন)",',
+'      "fixed_appearance": "ENGLISH. One dense paragraph describing face shape, skin tone, eyes, eyebrows, hair style and colour, facial hair, body build, height, exact clothing (garments, colours, patterns), footwear, accessories. This exact text is reused verbatim in every scene to keep the character identical.",',
+'      "image_prompt": "ENGLISH. Professional text-to-image prompt for a character reference sheet of this character, including gender, age, and everything from fixed_appearance, plus expression and pose. Do NOT mention the art style (it is appended later).",',
+'      "voice_style": "ENGLISH, 4-10 words: how the voice sounds, e.g. warm, slow, slightly hoarse old man"',
+'    }',
+'  ],',
+'  "scenes": [',
+'    {',
+'      "number": 1,',
+'      "title": "দৃশ্যের নাম (বাংলা)",',
+'      "summary": "এই দৃশ্যে কী ঘটে (বাংলা, ২-৩ বাক্য)",',
+'      "location": "ENGLISH place description",',
+'      "time_of_day": "ENGLISH e.g. golden sunset",',
+'      "mood": "ENGLISH e.g. peaceful and nostalgic",',
+'      "background_prompt": "ENGLISH. Detailed empty-environment prompt for this scene: landscape/interior, objects, weather, light, colours, depth layers, atmosphere. NO people or characters at all.",',
+'      "video_prompt": "ENGLISH. Professional video-generation prompt: what happens, character actions and emotions (refer to characters ONLY by name_en, do not re-describe their looks), camera shot type and movement, lighting, ambient sound.",',
+'      "characters_present": ["c1","c2"],',
+'      "dialogues": [ { "speaker": "c1", "text": "বাংলা সংলাপ", "emotion": "ENGLISH short delivery note" } ]',
+'    }',
+'  ]',
+"}",
+"",
+"Rules:",
+"1. Be faithful to the story. Do not change the plot or invent major events.",
+"2. Include every named character and every important unnamed one (give unnamed ones a descriptive Bengali name such as বৃদ্ধ কাঠুরিয়া).",
+"3. If the story has narration, add a character with id \"narrator\", name \"কথক\", name_en \"Narrator\", empty fixed_appearance and empty image_prompt; put narration lines as its dialogues. Keep narration lines short and natural to speak aloud.",
+"4. Dialogue text must be natural spoken Bengali in Bengali script, with no stage directions, no quotation marks, and no speaker names inside the text. If the story has little direct speech, write natural dialogue that matches the story.",
+"5. Split into scenes whenever location, time, or main action changes. Keep the order of the story.",
+"6. Gender must be exactly \"male\" or \"female\". Estimate a realistic age.",
+"7. Every speaker value must be a character id from the characters list.",
+"8. Output strictly valid JSON: double quotes, no trailing commas, no comments."
+].join("\n");
+
+/* ---------- গল্প বিশ্লেষণ ---------- */
+async function analyzeStory(story, setStatus) {
+  const models = uniq([$("#textModel").value.trim(), ...TEXT_MODELS].filter(Boolean));
+  let lastErr = null;
+  for (const m of models) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        setStatus("মডেল: " + m + (attempt ? " (আবার চেষ্টা " + attempt + ")" : "") + " — বিশ্লেষণ চলছে, ১-২ মিনিট লাগতে পারে...");
+        const j = await gemini(m, {
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [{ role: "user", parts: [{ text: "গল্প:\n" + story }] }],
+          generationConfig: {
+            temperature: 0.6,
+            responseMimeType: "application/json",
+            maxOutputTokens: /2\.0/.test(m) ? 8192 : 32768
+          }
+        });
+        const cand = j.candidates && j.candidates[0];
+        if (!cand || !cand.content || !cand.content.parts) {
+          const br = j.promptFeedback && j.promptFeedback.blockReason;
+          throw new GErr(br ? "গল্পটি নিরাপত্তা ফিল্টারে আটকেছে (" + br + ")। কিছু অংশ বদলে চেষ্টা করুন।" : "মডেল কোনো উত্তর দেয়নি।", 0, "EMPTY");
+        }
+        const text = cand.content.parts.map(p => p.text || "").join("");
+        return { text, finish: cand.finishReason || "" };
+      } catch (e) {
+        lastErr = e;
+        if (isModelProblem(e)) break;
+        if ((e.status === 429 || e.status >= 500 || e.code === "EMPTY") && attempt < 2) {
+          const w = Math.min(e.retry || 15, 60);
+          setStatus("অপেক্ষা করছি " + Math.ceil(w) + " সেকেন্ড, তারপর আবার চেষ্টা...");
+          await sleep(w * 1000);
+          continue;
+        }
+        throw e;
+      }
+    }
+  }
+  throw lastErr || new Error("কোনো মডেল কাজ করেনি।");
+}
+
+/* ---------- ডেটা স্বাভাবিক করা ---------- */
+function ageGroupFrom(age, g) {
+  if (["child", "teen", "young", "adult", "elder"].includes(g)) return g;
+  const a = Number(age);
+  if (!a) return "adult";
+  if (a < 13) return "child";
+  if (a < 20) return "teen";
+  if (a < 35) return "young";
+  if (a < 60) return "adult";
+  return "elder";
+}
+function normalize(raw) {
+  const out = { title: String(raw.title || "আমার গল্প"), synopsis: String(raw.synopsis || ""), characters: [], scenes: [] };
+  const origMap = new Map();
+  const nameMap = new Map();
+  const addChar = (c, i) => {
+    const name = String(c.name || ("চরিত্র " + (i + 1))).trim();
+    const age = Number(c.age) || null;
+    const obj = {
+      id: "c" + (out.characters.length + 1),
+      name,
+      name_en: String(c.name_en || name),
+      gender: /^f/i.test(String(c.gender || "")) ? "female" : "male",
+      age,
+      age_group: ageGroupFrom(age, c.age_group),
+      role: String(c.role || ""),
+      fixed_appearance: String(c.fixed_appearance || "").trim(),
+      image_prompt: String(c.image_prompt || "").trim(),
+      voice_style: String(c.voice_style || "").trim(),
+      narrator: /narrator/i.test(String(c.id || "")) || /^(কথক|narrator)$/i.test(name) || /^narrator$/i.test(String(c.name_en || ""))
+    };
+    out.characters.push(obj);
+    if (c.id != null) origMap.set(String(c.id), obj);
+    nameMap.set(name, obj);
+    nameMap.set(obj.name_en.toLowerCase(), obj);
+    return obj;
+  };
+  (Array.isArray(raw.characters) ? raw.characters : []).forEach((c, i) => { if (c && typeof c === "object") addChar(c, i); });
+  const find = k => {
+    if (k == null) return null;
+    const s = String(k).trim();
+    return origMap.get(s) || nameMap.get(s) || nameMap.get(s.toLowerCase()) || null;
+  };
+  (Array.isArray(raw.scenes) ? raw.scenes : []).forEach((s, i) => {
+    if (!s || typeof s !== "object") return;
+    const sc = {
+      number: i + 1,
+      title: String(s.title || ("দৃশ্য " + (i + 1))),
+      summary: String(s.summary || ""),
+      location: String(s.location || ""),
+      time_of_day: String(s.time_of_day || ""),
+      mood: String(s.mood || ""),
+      background_prompt: String(s.background_prompt || "").trim(),
+      video_prompt: String(s.video_prompt || "").trim(),
+      chars: [],
+      dialogues: []
+    };
+    (Array.isArray(s.characters_present) ? s.characters_present : []).forEach(k => {
+      const c = find(k); if (c && !sc.chars.includes(c.id)) sc.chars.push(c.id);
+    });
+    (Array.isArray(s.dialogues) ? s.dialogues : []).forEach(d => {
+      if (!d || !String(d.text || "").trim()) return;
+      let c = find(d.speaker);
+      if (!c) {
+        const nm = String(d.speaker || "").trim();
+        if (!nm) return;
+        c = addChar({ name: nm, name_en: nm, gender: "male" }, out.characters.length);
+      }
+      sc.dialogues.push({ speaker: c.id, text: String(d.text).trim(), emotion: String(d.emotion || "").trim() });
+      if (!c.narrator && !sc.chars.includes(c.id)) sc.chars.push(c.id);
+    });
+    out.scenes.push(sc);
+  });
+  if (!out.characters.length && !out.scenes.length) throw new Error("গল্প থেকে কিছু বের করা যায়নি। গল্পটি আরেকটু বিস্তারিত দিয়ে চেষ্টা করুন।");
+  return out;
+}
+function cById(id) { return state.data.characters.find(c => c.id === id); }
+
+/* ---------- ভয়েস বরাদ্দ ---------- */
+function assignVoices(data) {
+  const used = new Set();
+  const voices = {};
+  data.characters.forEach(c => {
+    const g = c.gender;
+    const pool = (VOICE_PICK[g] && VOICE_PICK[g][c.age_group]) || VOICE_PICK[g].adult;
+    let v = pool.find(x => !used.has(x));
+    if (!v) {
+      const all = [].concat(...Object.values(VOICE_PICK[g]));
+      v = all.find(x => !used.has(x)) || pool[0];
+    }
+    used.add(v);
+    voices[c.id] = v;
+  });
+  return voices;
+}
+
+/* ---------- প্রম্পট বিল্ডার ---------- */
+function styleText() { return $("#style").value.trim() || DEFAULT_STYLE; }
+function charPrompt(c) {
+  const base = c.image_prompt || ("Character reference of " + c.name_en + ", " + c.gender + ", " + (c.age || "") + " years old. " + c.fixed_appearance);
+  return base +
+    "\n\nStyle: " + styleText() + "." +
+    "\nLayout: character turnaround reference sheet — full-body front view, side view and back view plus one close-up face portrait, on a plain light neutral background, identical design and proportions in every view." +
+    "\nAvoid: text, captions, watermark, logo, extra limbs, deformed hands, realistic photo look.";
+}
+function bgPrompt(s) {
+  return (s.background_prompt || (s.location + ", " + s.time_of_day + ", " + s.mood)) +
+    "\n\nStyle: " + styleText() + "." +
+    "\nComposition: wide establishing background, layered depth (foreground, midground, distant background), aspect ratio " + $("#ratio").value + "." +
+    "\nAvoid: people, characters, animals in focus, text, watermark, logo.";
+}
+function videoPrompt(s) {
+  const present = s.chars.map(cById).filter(c => c && !c.narrator && c.fixed_appearance);
+  let t = s.video_prompt || s.summary;
+  t += "\n\nSetting: " + [s.location, s.time_of_day].filter(Boolean).join(", ") + (s.mood ? ". Mood: " + s.mood + "." : "");
+  if (present.length) {
+    t += "\n\nCharacters (keep their look exactly identical to the reference images):\n" +
+      present.map(c => "- " + c.name_en + ": " + c.fixed_appearance).join("\n");
+  }
+  t += "\n\nStyle: " + styleText() + ".";
+  t += "\nAspect ratio " + $("#ratio").value + ". Audio: soft ambient sound and gentle music only, no spoken dialogue, no subtitles, no on-screen text.";
+  return t;
+}
+function sceneScript(s) {
+  return s.dialogues.map(d => (cById(d.speaker) || {}).name + ": " + d.text).join("\n");
+}
+function charLines(c) {
+  const lines = [];
+  state.data.scenes.forEach(s => s.dialogues.forEach(d => { if (d.speaker === c.id) lines.push(d.text); }));
+  return lines;
+}
+
+/* ---------- রেন্ডার ---------- */
+let boxCounter = 0;
+function box(label, text, rows) {
+  const id = "bx" + (++boxCounter);
+  return '<div class="box"><div class="boxhead"><b>' + esc(label) + '</b>' +
+    '<button class="ghost small" data-act="copy" data-target="' + id + '">কপি</button></div>' +
+    '<textarea class="mono" id="' + id + '" rows="' + (rows || 5) + '">' + esc(text) + '</textarea></div>';
+}
+function voiceOptions(sel) {
+  return Object.keys(VOICE_INFO).map(v => {
+    const i = VOICE_INFO[v];
+    return '<option value="' + v + '"' + (v === sel ? " selected" : "") + '>' + v + " — " + (i[0] === "f" ? "নারী" : "পুরুষ") + ", " + i[1] + '</option>';
+  }).join("");
+}
+const GENDER_BN = { male: "পুরুষ", female: "নারী" };
+const AGE_BN = { child: "শিশু", teen: "কিশোর", young: "তরুণ", adult: "প্রাপ্তবয়স্ক", elder: "বৃদ্ধ" };
+
+function render() {
+  const d = state.data;
+  boxCounter = 0;
+  let h = "";
+  h += '<section class="card"><h2>🎞️ ' + esc(d.title) + '</h2><p class="muted">' + esc(d.synopsis) + '</p>' +
+    '<span class="tag">' + d.characters.length + ' ক্যারেক্টার</span><span class="tag">' + d.scenes.length + ' দৃশ্য</span></section>';
+
+  // নাম
+  const names = d.characters.map(c => c.name + (c.name_en && c.name_en !== c.name ? " (" + c.name_en + ")" : "")).join("\n");
+  h += '<section class="card" id="sec-names"><h2>👥 ক্যারেক্টারের নাম</h2>' + box("সব নাম", names, Math.min(10, d.characters.length + 1)) + '</section>';
+
+  // ক্যারেক্টার ছবি
+  h += '<section class="card" id="sec-chars"><h2>🖼️ ক্যারেক্টারের ছবির প্রম্পট (Flow-এর জন্য)</h2>' +
+    '<p class="muted">প্রতিটি প্রম্পট Flow-এর Create Image-এ পেস্ট করুন। ছবি পছন্দ হলে সেভ করে রাখুন — পরে ভিডিওতে রেফারেন্স (Ingredients) হিসেবে দেবেন, তাহলে সব দৃশ্যে চেহারা একই থাকবে।</p><div class="grid cols2">';
+  d.characters.forEach(c => {
+    h += '<div class="char"><h3>' + esc(c.name) + '</h3>' +
+      '<span class="tag">' + GENDER_BN[c.gender] + '</span><span class="tag">' + (c.age ? c.age + " বছর" : AGE_BN[c.age_group]) + '</span>' +
+      (c.role ? '<div class="muted">' + esc(c.role) + '</div>' : "");
+    if (c.narrator || (!c.image_prompt && !c.fixed_appearance)) h += '<p class="muted">কথক — ছবি লাগবে না।</p>';
+    else h += box("ছবির প্রম্পট", charPrompt(c), 11);
+    h += '</div>';
+  });
+  h += '</div></section>';
+
+  // ডায়ালগ ও ভয়েস
+  h += '<section class="card" id="sec-voice"><h2>🎙️ ক্যারেক্টার অনুযায়ী ডায়ালগ ও ভয়েস</h2>' +
+    '<p class="muted">প্রতিটি ক্যারেক্টারের সব সংলাপ একসাথে। কপি করে অন্য ভয়েস টুলেও দিতে পারেন, অথবা এখানেই Gemini ভয়েসে অডিও বানান।</p>' +
+    '<div class="chk"><input type="checkbox" id="useStyle" checked><label for="useStyle" style="margin:0">ভয়েসের স্টাইল নির্দেশ ব্যবহার করুন (যদি নির্দেশটাই পড়ে ফেলে, এটা বন্ধ করুন)</label></div>' +
+    '<div class="actions"><button class="primary" data-act="genall">🔊 সবার ভয়েস একে একে বানান</button></div>' +
+    '<div class="msg info" id="allVoiceMsg"></div><div class="grid" style="margin-top:12px">';
+  d.characters.forEach(c => {
+    const lines = charLines(c);
+    h += '<div class="char"><h3>' + esc(c.name) + ' <span class="muted">(' + lines.length + ' লাইন)</span></h3>' +
+      '<label>ভয়েস</label><select data-voice-sel="' + c.id + '">' + voiceOptions(state.voices[c.id]) + '</select>';
+    if (lines.length) {
+      h += box("সম্পূর্ণ ডায়ালগ", lines.join("\n"), Math.min(12, lines.length + 2));
+      h += '<div class="actions"><button class="primary small" data-act="genvoice" data-id="' + c.id + '">🔊 ভয়েস বানান</button></div>' +
+        '<div class="msg info" id="vs-' + c.id + '"></div><div id="au-' + c.id + '"></div>';
+    } else h += '<p class="muted">এই ক্যারেক্টারের কোনো সংলাপ নেই।</p>';
+    h += '</div>';
+  });
+  h += '</div></section>';
+
+  // দৃশ্য
+  h += '<section class="card" id="sec-scenes"><h2>🎬 দৃশ্য অনুযায়ী প্রম্পট</h2>';
+  d.scenes.forEach(s => {
+    h += '<div class="char" style="margin-top:12px"><div class="scene-head"><div class="num">' + s.number + '</div><div><h3 style="margin:0">' + esc(s.title) + '</h3></div></div>' +
+      '<p class="muted">' + esc(s.summary) + '</p>' +
+      '<div>' + s.chars.map(id => cById(id)).filter(Boolean).map(c => '<span class="tag">' + esc(c.name) + '</span>').join("") + '</div>' +
+      box("🖼️ ব্যাকগ্রাউন্ড প্রম্পট (Flow → Create Image)", bgPrompt(s), 8) +
+      box("🎥 ভিডিও প্রম্পট (Flow → Video)", videoPrompt(s), 12);
+    if (s.dialogues.length) h += box("💬 এই দৃশ্যের সংলাপ (ক্রম অনুযায়ী)", sceneScript(s), Math.min(10, s.dialogues.length + 1));
+    h += '</div>';
+  });
+  h += '</section>';
+
+  // এক্সপোর্ট
+  h += '<section class="card" id="sec-export"><h2>⬇️ ডাউনলোড</h2><div class="actions">' +
+    '<button class="primary" data-act="dltxt">পুরো প্রজেক্ট (.txt)</button>' +
+    '<button class="ghost" data-act="dljson">ডেটা (.json)</button></div></section>';
+
+  $("#resBody").innerHTML = h;
+  $("#results").classList.remove("hidden");
+}
+
+/* ---------- ভয়েস (TTS) ---------- */
+function b64ToBytes(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+function pcmToWav(pcm, rate) {
+  const buf = new ArrayBuffer(44);
+  const v = new DataView(buf);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, "RIFF"); v.setUint32(4, 36 + pcm.length, true); w(8, "WAVE"); w(12, "fmt ");
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  w(36, "data"); v.setUint32(40, pcm.length, true);
+  return new Blob([buf, pcm], { type: "audio/wav" });
+}
+function chunkLines(lines, max) {
+  const chunks = []; let cur = [], len = 0;
+  lines.forEach(l => {
+    if (cur.length && len + l.length > max) { chunks.push(cur); cur = []; len = 0; }
+    cur.push(l); len += l.length + 1;
+  });
+  if (cur.length) chunks.push(cur);
+  return chunks;
+}
+async function ttsOnce(prompt, voice, setStatus) {
+  const models = uniq([$("#ttsModel").value.trim(), ...TTS_MODELS].filter(Boolean));
+  let lastErr = null;
+  for (const m of models) {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        const j = await gemini(m, {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } }
+          }
+        });
+        const parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
+        const part = parts.find(p => p.inlineData && p.inlineData.data);
+        if (!part) throw new GErr("অডিও আসেনি (মডেল শুধু টেক্সট দিয়েছে)।", 0, "NOAUDIO");
+        const mt = part.inlineData.mimeType || "";
+        const r = /rate=(\d+)/.exec(mt);
+        return { pcm: b64ToBytes(part.inlineData.data), rate: r ? parseInt(r[1], 10) : 24000 };
+      } catch (e) {
+        lastErr = e;
+        if (isModelProblem(e)) break;
+        if (e.status === 429 || e.status >= 500 || e.code === "NOAUDIO") {
+          if (attempt === 3) break;
+          const w = e.code === "NOAUDIO" ? 2 : Math.min(e.retry || 20, 70);
+          if (setStatus) setStatus("অপেক্ষা করছি " + Math.ceil(w) + " সেকেন্ড (ফ্রী লিমিট), তারপর আবার...");
+          await sleep(w * 1000);
+          continue;
+        }
+        throw e;
+      }
+    }
+  }
+  throw lastErr || new Error("ভয়েস বানানো যায়নি।");
+}
+async function genVoice(id) {
+  const c = cById(id);
+  const lines = charLines(c);
+  const st = $("#vs-" + id);
+  const holder = $("#au-" + id);
+  if (!lines.length) return;
+  const voice = state.voices[id];
+  const useStyle = $("#useStyle") ? $("#useStyle").checked : true;
+  const who = c.gender === "female" ? "a woman" : "a man";
+  const directive = useStyle
+    ? "Say the following in natural spoken Bengali, as " + who + (c.age ? " about " + c.age + " years old" : "") + ", voice: " + (c.voice_style || "natural and expressive") + ". Clear Bengali pronunciation, human emotion.\n\n"
+    : "";
+  const chunks = chunkLines(lines, 700);
+  const pcms = []; let rate = 24000;
+  const btn = document.querySelector('[data-act="genvoice"][data-id="' + id + '"]');
+  if (btn) btn.disabled = true;
+  try {
+    for (let i = 0; i < chunks.length; i++) {
+      st.className = "msg info";
+      st.innerHTML = '<span class="loader"></span>অংশ ' + (i + 1) + "/" + chunks.length + " বানানো হচ্ছে...";
+      const r = await ttsOnce(directive + chunks[i].join("\n"), voice, t => { st.textContent = t; });
+      pcms.push(r.pcm); rate = r.rate;
+      if (i < chunks.length - 1) await sleep(3000);
+    }
+    const total = pcms.reduce((a, b) => a + b.length, 0);
+    const all = new Uint8Array(total); let off = 0;
+    pcms.forEach(p => { all.set(p, off); off += p.length; });
+    const blob = pcmToWav(all, rate);
+    if (state.audioUrls[id]) URL.revokeObjectURL(state.audioUrls[id]);
+    const url = URL.createObjectURL(blob);
+    state.audioUrls[id] = url;
+    holder.innerHTML = '<audio controls src="' + url + '"></audio>' +
+      '<div class="actions"><a class="ghost small" style="text-decoration:none;color:var(--text);padding:5px 11px;border:1px solid var(--line);border-radius:8px" download="' + esc(c.name_en || c.name).replace(/[^\w\-]+/g, "_") + '.wav" href="' + url + '">⬇️ WAV ডাউনলোড</a></div>';
+    st.className = "msg ok";
+    st.textContent = "✅ ভয়েস তৈরি (" + voice + ")";
+  } catch (e) {
+    st.className = "msg err";
+    st.textContent = "❌ " + friendlyError(e);
+    throw e;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+async function genAll() {
+  const msg = $("#allVoiceMsg");
+  const list = state.data.characters.filter(c => charLines(c).length);
+  const btn = document.querySelector('[data-act="genall"]');
+  btn.disabled = true;
+  let ok = 0;
+  for (let i = 0; i < list.length; i++) {
+    msg.className = "msg info";
+    msg.innerHTML = '<span class="loader"></span>' + (i + 1) + "/" + list.length + " — " + esc(list[i].name);
+    try { await genVoice(list[i].id); ok++; } catch (e) { /* প্রতিটির নিচে এরর দেখানো আছে */ }
+    if (i < list.length - 1) await sleep(4000);
+  }
+  msg.className = ok === list.length ? "msg ok" : "msg err";
+  msg.textContent = ok + "/" + list.length + " ক্যারেক্টারের ভয়েস তৈরি হয়েছে।" + (ok < list.length ? " বাকিগুলো কিছুক্ষণ পরে একটা একটা করে বানান।" : "");
+  btn.disabled = false;
+}
+
+/* ---------- এক্সপোর্ট ---------- */
+function fullText() {
+  const d = state.data;
+  const L = [];
+  L.push("=== " + d.title + " ===", d.synopsis, "");
+  L.push("##### ক্যারেক্টারের নাম #####");
+  d.characters.forEach(c => L.push("- " + c.name + " (" + c.name_en + ")"));
+  L.push("", "##### ক্যারেক্টারের ছবির প্রম্পট #####");
+  d.characters.forEach(c => { if (!c.narrator && (c.image_prompt || c.fixed_appearance)) L.push("--- " + c.name + " ---", charPrompt(c), ""); });
+  L.push("##### ডায়ালগ (ক্যারেক্টার অনুযায়ী) #####");
+  d.characters.forEach(c => { const ls = charLines(c); if (ls.length) L.push("--- " + c.name + " [" + (state.voices[c.id] || "") + "] ---", ls.join("\n"), ""); });
+  L.push("##### দৃশ্য #####");
+  d.scenes.forEach(s => {
+    L.push("=== দৃশ্য " + s.number + ": " + s.title + " ===", s.summary, "", "[ব্যাকগ্রাউন্ড প্রম্পট]", bgPrompt(s), "", "[ভিডিও প্রম্পট]", videoPrompt(s), "");
+    if (s.dialogues.length) L.push("[সংলাপ]", sceneScript(s), "");
+  });
+  return L.join("\n");
+}
+function download(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type: type || "text/plain;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) {}
+  ta.remove();
+  return ok;
+}
+
+/* ---------- সেভ/লোড ---------- */
+function persist() {
+  LS.set("sv_story", $("#story").value);
+  LS.set("sv_style", $("#style").value);
+  LS.set("sv_ratio", $("#ratio").value);
+  if (state.data) LS.set("sv_data", JSON.stringify({ data: state.data, voices: state.voices }));
+}
+function setMsg(el, text, kind) { el.className = "msg " + (kind || "info"); el.textContent = text; }
+
+/* ---------- মূল কাজ ---------- */
+async function runAll() {
+  if (state.busy) return;
+  const story = $("#story").value.trim();
+  const msg = $("#goMsg");
+  if (story.length < 80) { setMsg(msg, "গল্পটা আরেকটু বড় দিন (অন্তত কয়েক লাইন)।", "err"); return; }
+  if (!getKey()) {
+    setMsg(msg, "আগে সেটিংসে API Key দিন।", "err");
+    $("#settingsBox").open = true;
+    return;
+  }
+  state.busy = true;
+  $("#goBtn").disabled = true;
+  persist();
+  msg.className = "msg info";
+  msg.innerHTML = '<span class="loader"></span>শুরু হচ্ছে...';
+  try {
+    const r = await analyzeStory(story, t => { msg.className = "msg info"; msg.innerHTML = '<span class="loader"></span>' + esc(t); });
+    const raw = parseLooseJSON(r.text);
+    state.data = normalize(raw);
+    state.voices = assignVoices(state.data);
+    Object.values(state.audioUrls).forEach(u => URL.revokeObjectURL(u));
+    state.audioUrls = {};
+    render();
+    persist();
+    let note = "✅ হয়ে গেছে — " + state.data.characters.length + " ক্যারেক্টার, " + state.data.scenes.length + " দৃশ্য।";
+    if (r.finish === "MAX_TOKENS") note += "\n⚠️ গল্প অনেক বড় হওয়ায় শেষের অংশ কাটা পড়তে পারে। বড় গল্প দুই ভাগ করে আলাদাভাবে চালান।";
+    setMsg(msg, note, r.finish === "MAX_TOKENS" ? "err" : "ok");
+    setTimeout(() => { const t = $("#sec-names"); if (t) t.scrollIntoView({ behavior: "smooth" }); }, 100);
+  } catch (e) {
+    setMsg(msg, "❌ " + friendlyError(e), "err");
+  } finally {
+    state.busy = false;
+    $("#goBtn").disabled = false;
+  }
+}
+
+/* ---------- ইভেন্ট ---------- */
+document.addEventListener("click", async ev => {
+  const b = ev.target.closest("[data-act]");
+  if (!b) return;
+  const act = b.dataset.act;
+  if (act === "copy") {
+    const ta = document.getElementById(b.dataset.target);
+    if (!ta) return;
+    const ok = await copyText(ta.value);
+    const old = b.textContent;
+    b.textContent = ok ? "✓ কপি হয়েছে" : "কপি হয়নি";
+    setTimeout(() => { b.textContent = old; }, 1400);
+  } else if (act === "genvoice") {
+    try { await genVoice(b.dataset.id); } catch (e) {}
+  } else if (act === "genall") {
+    genAll();
+  } else if (act === "dltxt") {
+    download("story-project.txt", fullText());
+  } else if (act === "dljson") {
+    download("story-project.json", JSON.stringify({ data: state.data, voices: state.voices }, null, 2), "application/json");
+  }
+});
+document.addEventListener("change", ev => {
+  const s = ev.target.closest("[data-voice-sel]");
+  if (s) { state.voices[s.dataset.voiceSel] = s.value; persist(); }
+});
+
+$("#goBtn").addEventListener("click", runAll);
+$("#clearBtn").addEventListener("click", () => {
+  if (!confirm("গল্প ও সব ফলাফল মুছে ফেলবেন? (API Key থাকবে)")) return;
+  $("#story").value = "";
+  state.data = null; state.voices = {};
+  Object.values(state.audioUrls).forEach(u => URL.revokeObjectURL(u));
+  state.audioUrls = {};
+  LS.del("sv_story"); LS.del("sv_data");
+  $("#resBody").innerHTML = ""; $("#results").classList.add("hidden");
+  setMsg($("#goMsg"), "", "info");
+});
+$("#showKey").addEventListener("change", e => { $("#apiKey").type = e.target.checked ? "text" : "password"; });
+$("#saveSettings").addEventListener("click", () => {
+  LS.set("sv_key", $("#apiKey").value.trim());
+  LS.set("sv_tm", $("#textModel").value.trim());
+  LS.set("sv_ttm", $("#ttsModel").value.trim());
+  setMsg($("#settingsMsg"), "✅ সেভ হয়েছে (শুধু এই ব্রাউজারে)।", "ok");
+});
+$("#testKey").addEventListener("click", async () => {
+  const m = $("#settingsMsg");
+  const btn = $("#testKey");
+  btn.disabled = true;
+  m.className = "msg info"; m.innerHTML = '<span class="loader"></span>পরীক্ষা চলছে...';
+  const models = uniq([$("#textModel").value.trim(), ...TEXT_MODELS].filter(Boolean));
+  try {
+    let done = false, lastErr = null;
+    for (const mod of models) {
+      try {
+        await gemini(mod, { contents: [{ parts: [{ text: "Reply with the single word: ok" }] }], generationConfig: { maxOutputTokens: 64 } });
+        setMsg(m, "✅ Key ঠিক আছে। মডেল চালু: " + mod, "ok"); done = true; break;
+      } catch (e) { lastErr = e; if (!isModelProblem(e)) throw e; }
+    }
+    if (!done) throw lastErr;
+  } catch (e) {
+    setMsg(m, "❌ " + friendlyError(e), "err");
+  } finally { btn.disabled = false; }
+});
+["story", "style", "ratio"].forEach(id => $("#" + id).addEventListener("input", persist));
+$("#ratio").addEventListener("change", () => { persist(); if (state.data) { const y = window.scrollY; render(); restoreAudio(); window.scrollTo(0, y); } });
+$("#style").addEventListener("change", () => { if (state.data) { const y = window.scrollY; render(); restoreAudio(); window.scrollTo(0, y); } });
+
+function restoreAudio() {
+  Object.keys(state.audioUrls).forEach(id => {
+    const h = $("#au-" + id);
+    if (h) h.innerHTML = '<audio controls src="' + state.audioUrls[id] + '"></audio>';
+  });
+}
+
+/* ---------- শুরুতে লোড ---------- */
+(function init() {
+  $("#apiKey").value = LS.get("sv_key", "");
+  $("#textModel").value = LS.get("sv_tm", "gemini-2.5-flash");
+  $("#ttsModel").value = LS.get("sv_ttm", "gemini-3.1-flash-tts-preview");
+  $("#story").value = LS.get("sv_story", "");
+  $("#style").value = LS.get("sv_style", DEFAULT_STYLE) || DEFAULT_STYLE;
+  $("#ratio").value = LS.get("sv_ratio", "16:9");
+  if (!$("#apiKey").value) $("#settingsBox").open = true;
+  try {
+    const saved = JSON.parse(LS.get("sv_data", "null"));
+    if (saved && saved.data && Array.isArray(saved.data.characters) && Array.isArray(saved.data.scenes)) {
+      state.data = saved.data; state.voices = saved.voices || assignVoices(saved.data);
+      render();
+      setMsg($("#goMsg"), "আগের ফলাফল ফিরিয়ে আনা হয়েছে।", "info");
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
