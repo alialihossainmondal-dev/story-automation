@@ -87,19 +87,6 @@ footer{color:var(--muted);font-size:.8rem;text-align:center;padding:24px 0 40px}
       <input id="ttsModel" value="gemini-3.1-flash-tts-preview">
     </div>
   </div>
-  <div class="row two">
-    <div>
-      <label for="imgModel">ছবির মডেল (Cloudflare)</label>
-      <select id="imgModel">
-        <option value="flux">FLUX — ভালো মান (বর্গাকার ছবি)</option>
-        <option value="sdxl">SDXL — 16:9 / 9:16 মাপ মানে</option>
-      </select>
-    </div>
-    <div>
-      <label for="appPass">অ্যাক্সেস পাসওয়ার্ড (Vercel-এ APP_PASSWORD দিলে)</label>
-      <input id="appPass" type="password" placeholder="ঐচ্ছিক" autocomplete="off">
-    </div>
-  </div>
   <p class="muted">Key শুধু আপনার ব্রাউজারেই সেভ থাকে (localStorage)। এটা GitHub-এ বা কোডে কখনো বসাবেন না। Key পাবেন: aistudio.google.com → Get API key।</p>
   <div class="actions">
     <button class="primary" id="saveSettings">সেভ করুন</button>
@@ -503,13 +490,11 @@ function charLines(c) {
 
 /* ---------- রেন্ডার ---------- */
 let boxCounter = 0;
-function box(label, text, rows, img) {
+function box(label, text, rows) {
   const id = "bx" + (++boxCounter);
-  return '<div class="box"><div class="boxhead"><b>' + esc(label) + '</b><span style="display:flex;gap:6px">' +
-    (img ? '<button class="primary small" data-act="genimg" data-target="' + id + '">🖼️ ছবি বানান</button>' : '') +
-    '<button class="ghost small" data-act="copy" data-target="' + id + '">কপি</button></span></div>' +
-    '<textarea class="mono" id="' + id + '" rows="' + (rows || 5) + '">' + esc(text) + '</textarea>' +
-    (img ? '<div class="msg info" id="im-s-' + id + '"></div><div id="im-' + id + '"></div>' : '') + '</div>';
+  return '<div class="box"><div class="boxhead"><b>' + esc(label) + '</b>' +
+    '<button class="ghost small" data-act="copy" data-target="' + id + '">কপি</button></div>' +
+    '<textarea class="mono" id="' + id + '" rows="' + (rows || 5) + '">' + esc(text) + '</textarea></div>';
 }
 function voiceOptions(sel) {
   return Object.keys(VOICE_INFO).map(v => {
@@ -539,7 +524,7 @@ function render() {
       '<span class="tag">' + GENDER_BN[c.gender] + '</span><span class="tag">' + (c.age ? c.age + " বছর" : AGE_BN[c.age_group]) + '</span>' +
       (c.role ? '<div class="muted">' + esc(c.role) + '</div>' : "");
     if (c.narrator || (!c.image_prompt && !c.fixed_appearance)) h += '<p class="muted">কথক — ছবি লাগবে না।</p>';
-    else h += box("ছবির প্রম্পট", charPrompt(c), 11, true);
+    else h += box("ছবির প্রম্পট", charPrompt(c), 11);
     h += '</div>';
   });
   h += '</div></section>';
@@ -569,7 +554,7 @@ function render() {
     h += '<div class="char" style="margin-top:12px"><div class="scene-head"><div class="num">' + s.number + '</div><div><h3 style="margin:0">' + esc(s.title) + '</h3></div></div>' +
       '<p class="muted">' + esc(s.summary) + '</p>' +
       '<div>' + s.chars.map(id => cById(id)).filter(Boolean).map(c => '<span class="tag">' + esc(c.name) + '</span>').join("") + '</div>' +
-      box("🖼️ ব্যাকগ্রাউন্ড প্রম্পট", bgPrompt(s), 8, true) +
+      box("🖼️ ব্যাকগ্রাউন্ড প্রম্পট (Flow → Create Image)", bgPrompt(s), 8) +
       box("🎥 ভিডিও প্রম্পট (Flow → Video)", videoPrompt(s), 12);
     if (s.dialogues.length) h += box("💬 এই দৃশ্যের সংলাপ (ক্রম অনুযায়ী)", sceneScript(s), Math.min(10, s.dialogues.length + 1));
     h += '</div>';
@@ -709,45 +694,6 @@ async function genAll() {
   btn.disabled = false;
 }
 
-/* ---------- ছবি (Cloudflare, Vercel ফাংশনের মাধ্যমে) ---------- */
-async function genImage(targetId, btn) {
-  const ta = document.getElementById(targetId);
-  const st = document.getElementById("im-s-" + targetId);
-  const holder = document.getElementById("im-" + targetId);
-  if (!ta || !st || !holder) return;
-  const prompt = ta.value.trim();
-  if (prompt.length < 3) { setMsg(st, "প্রম্পট খালি।", "err"); return; }
-  btn.disabled = true;
-  st.className = "msg info";
-  st.innerHTML = '<span class="loader"></span>ছবি বানানো হচ্ছে (১০-৩০ সেকেন্ড)...';
-  try {
-    if (location.protocol === "file:") throw new Error("এই ফিচার শুধু Vercel-এ ডিপ্লয় করা সাইটে চলে (ফাইল সরাসরি খুললে নয়)।");
-    let res;
-    try {
-      res = await fetch("/api/image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-app-pass": $("#appPass").value.trim() },
-        body: JSON.stringify({ prompt, model: $("#imgModel").value, ratio: $("#ratio").value })
-      });
-    } catch (e) { throw new Error("নেটওয়ার্ক সমস্যা। ইন্টারনেট চেক করুন।"); }
-    let j = null;
-    try { j = await res.json(); } catch (e) {}
-    if (res.status === 404) throw new Error("api/image.js ডিপ্লয় হয়নি। GitHub-এ api ফোল্ডারসহ আপলোড করে Vercel-এ Redeploy দিন।");
-    if (!res.ok || !j || !j.image) {
-      const code = j && j.code;
-      let m = (j && j.error) || ("HTTP " + res.status);
-      if (code === "QUOTA") m = "আজকের ফ্রী ছবির কোটা শেষ। কাল (ভারতীয় সময় সকাল ৫:৩০-এর পর) আবার চেষ্টা করুন, অথবা Flow-তে বানান।\n" + m;
-      throw new Error(m);
-    }
-    const url = "data:" + (j.mime || "image/png") + ";base64," + j.image;
-    holder.innerHTML = '<img alt="generated" src="' + url + '" style="width:100%;border-radius:10px;margin-top:8px;border:1px solid var(--line)">' +
-      '<div class="actions"><a style="text-decoration:none;color:var(--text);padding:5px 11px;border:1px solid var(--line);border-radius:8px;font-size:.82rem" download="' + targetId + '.' + (/jpeg/.test(j.mime) ? "jpg" : "png") + '" href="' + url + '">⬇️ ছবি ডাউনলোড</a></div>';
-    setMsg(st, "✅ তৈরি (" + (j.model === "sdxl" ? "SDXL" : "FLUX") + ")। পছন্দ না হলে আবার চাপুন।", "ok");
-  } catch (e) {
-    setMsg(st, "❌ " + e.message, "err");
-  } finally { btn.disabled = false; }
-}
-
 /* ---------- এক্সপোর্ট ---------- */
 function fullText() {
   const d = state.data;
@@ -842,8 +788,6 @@ document.addEventListener("click", async ev => {
     const old = b.textContent;
     b.textContent = ok ? "✓ কপি হয়েছে" : "কপি হয়নি";
     setTimeout(() => { b.textContent = old; }, 1400);
-  } else if (act === "genimg") {
-    genImage(b.dataset.target, b);
   } else if (act === "genvoice") {
     try { await genVoice(b.dataset.id); } catch (e) {}
   } else if (act === "genall") {
@@ -875,8 +819,6 @@ $("#saveSettings").addEventListener("click", () => {
   LS.set("sv_key", $("#apiKey").value.trim());
   LS.set("sv_tm", $("#textModel").value.trim());
   LS.set("sv_ttm", $("#ttsModel").value.trim());
-  LS.set("sv_im", $("#imgModel").value);
-  LS.set("sv_pw", $("#appPass").value.trim());
   setMsg($("#settingsMsg"), "✅ সেভ হয়েছে (শুধু এই ব্রাউজারে)।", "ok");
 });
 $("#testKey").addEventListener("click", async () => {
@@ -914,8 +856,6 @@ function restoreAudio() {
   $("#apiKey").value = LS.get("sv_key", "");
   $("#textModel").value = LS.get("sv_tm", "gemini-2.5-flash");
   $("#ttsModel").value = LS.get("sv_ttm", "gemini-3.1-flash-tts-preview");
-  $("#imgModel").value = LS.get("sv_im", "flux");
-  $("#appPass").value = LS.get("sv_pw", "");
   $("#story").value = LS.get("sv_story", "");
   $("#style").value = LS.get("sv_style", DEFAULT_STYLE) || DEFAULT_STYLE;
   $("#ratio").value = LS.get("sv_ratio", "16:9");
